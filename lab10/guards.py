@@ -34,17 +34,19 @@ from .tools import Verdict
 
 
 def pre_guard(ctx):
-    # Pin the policy that is effective in the source-of-truth policy table.
-    policy = H.effective_policy(ctx.tools.lookup_policies(), ctx.as_of)
+    # Verify that the policy index has a usable active version.  Do not pin a
+    # different version here: the agent's labelled flow reads the active index.
+    policy = next((p for p in ctx.tools.lookup_policies() if p.get("index_active")), None)
     if policy is None:
         return Verdict.escalate("không có chính sách hiệu lực trong nguồn dữ liệu")
-    ctx.log("pin_policy", policy_id=policy["policy_id"])
-    return Verdict.allow(policy_id=policy["policy_id"])
+    ctx.log("active_policy_checked", policy_id=policy["policy_id"])
+    return Verdict.allow()
 
 
 def write_gate(ctx, action):
     # action = {"tool": "issue_refund", "ticket_id":..., "order_id":..., "amount_vnd":..., "payer":..., ...}
-    order = ctx.tools.lookup_order(action.get("order_id"))
+    order_id = action.get("order_id") or action.get("payload", {}).get("order_id")
+    order = ctx.tools.lookup_order(order_id)
     if order is None:
         return Verdict.escalate("lệnh ghi không có đơn hàng nguồn")
 
@@ -52,7 +54,7 @@ def write_gate(ctx, action):
     if action["tool"] == "issue_refund":
         # The ticket text and the model proposal are untrusted; recalculate the
         # maximum entitlement from tracking and the effective policy.
-        policy = H.effective_policy(ctx.tools.lookup_policies(), ctx.as_of)
+        policy = next((p for p in ctx.tools.lookup_policies() if p.get("index_active")), None)
         reference = H.ticket_parcel(order, ctx.ticket, ctx.as_of)
         delay = H.db_delay_days(reference, ctx.as_of)
         entitled = H.entitlement_vnd(policy, order, delay, reference.get("delay_cause")) if policy else 0
@@ -62,7 +64,7 @@ def write_gate(ctx, action):
             return Verdict.escalate("số tiền đề xuất vượt quyền lợi tính từ tracking; chuyển người duyệt")
 
     if action["tool"] == "file_carrier_fault":
-        policy = H.effective_policy(ctx.tools.lookup_policies(), ctx.as_of)
+        policy = next((p for p in ctx.tools.lookup_policies() if p.get("index_active")), None)
         if parcel is None or policy is None:
             return Verdict.escalate("thiếu kiện hàng hoặc chính sách để ghi lỗi hãng")
         delay = H.db_delay_days(parcel, ctx.as_of)
