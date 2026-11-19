@@ -45,13 +45,15 @@ def pre_guard(ctx):
 
 def write_gate(ctx, action):
     # action = {"tool": "issue_refund", "ticket_id":..., "order_id":..., "amount_vnd":..., "payer":..., ...}
+    tool = action["tool"]
     order_id = action.get("order_id") or action.get("payload", {}).get("order_id")
-    order = ctx.tools.lookup_order(order_id)
-    if order is None:
+    order = ctx.tools.lookup_order(order_id) if order_id else None
+
+    if tool in ("issue_refund", "file_carrier_fault", "notify_carrier") and order is None:
         return Verdict.escalate("lệnh ghi không có đơn hàng nguồn")
 
-    parcel = next((p for p in order["parcels"] if p["parcel_id"] == action.get("parcel_id")), None)
-    if action["tool"] == "issue_refund":
+    parcel = next((p for p in order["parcels"] if p["parcel_id"] == action.get("parcel_id")), None) if order else None
+    if tool == "issue_refund":
         # The ticket text and the model proposal are untrusted; recalculate the
         # maximum entitlement from tracking and the effective policy.
         policy = next((p for p in ctx.tools.lookup_policies() if p.get("index_active")), None)
@@ -63,7 +65,7 @@ def write_gate(ctx, action):
                     parcel_id=reference["parcel_id"], db_delay_days=delay)
             return Verdict.escalate("số tiền đề xuất vượt quyền lợi tính từ tracking; chuyển người duyệt")
 
-    if action["tool"] == "file_carrier_fault":
+    if tool == "file_carrier_fault":
         policy = next((p for p in ctx.tools.lookup_policies() if p.get("index_active")), None)
         if parcel is None or policy is None:
             return Verdict.escalate("thiếu kiện hàng hoặc chính sách để ghi lỗi hãng")
@@ -73,7 +75,7 @@ def write_gate(ctx, action):
                     recorded_cause=parcel.get("delay_cause"))
             return Verdict.deny("tracking không chứng minh hãng chịu lỗi")
 
-    if action["tool"] == "notify_carrier":
+    if tool == "notify_carrier":
         payload = action.get("payload", {})
         blocked = set((ctx.gates or {}).get("legal", {}).get("pii_fields_blocked_to_third_party") or [])
         if set(payload) & blocked:
