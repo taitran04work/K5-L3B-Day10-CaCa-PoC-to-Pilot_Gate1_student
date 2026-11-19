@@ -34,9 +34,48 @@ from .tools import Verdict
 
 
 def pre_guard(ctx):
-    return Verdict.allow()
+    # Pin the policy that is effective in the source-of-truth policy table.
+    policy = H.effective_policy(ctx.tools.lookup_policies(), ctx.as_of)
+    if policy is None:
+        return Verdict.escalate("không có chính sách hiệu lực trong nguồn dữ liệu")
+    ctx.log("pin_policy", policy_id=policy["policy_id"])
+    return Verdict.allow(policy_id=policy["policy_id"])
 
 
 def write_gate(ctx, action):
     # action = {"tool": "issue_refund", "ticket_id":..., "order_id":..., "amount_vnd":..., "payer":..., ...}
+    order = ctx.tools.lookup_order(action.get("order_id"))
+    if order is None:
+        return Verdict.escalate("lệnh ghi không có đơn hàng nguồn")
+
+    parcel = next((p for p in order["parcels"] if p["parcel_id"] == action.get("parcel_id")), None)
+    if action["tool"] == "issue_refund":
+        # The ticket text and the model proposal are untrusted; recalculate the
+        # maximum entitlement from tracking and the effective policy.
+        policy = H.effective_policy(ctx.tools.lookup_policies(), ctx.as_of)
+        reference = H.ticket_parcel(order, ctx.ticket, ctx.as_of)
+        delay = H.db_delay_days(reference, ctx.as_of)
+        entitled = H.entitlement_vnd(policy, order, delay, reference.get("delay_cause")) if policy else 0
+        if action.get("amount_vnd", 0) > entitled:
+            ctx.log("refund_mismatch", proposed=action.get("amount_vnd", 0), entitled=entitled,
+                    parcel_id=reference["parcel_id"], db_delay_days=delay)
+            return Verdict.escalate("số tiền đề xuất vượt quyền lợi tính từ tracking; chuyển người duyệt")
+
+    if action["tool"] == "file_carrier_fault":
+        policy = H.effective_policy(ctx.tools.lookup_policies(), ctx.as_of)
+        if parcel is None or policy is None:
+            return Verdict.escalate("thiếu kiện hàng hoặc chính sách để ghi lỗi hãng")
+        delay = H.db_delay_days(parcel, ctx.as_of)
+        if not H.carrier_at_fault(policy, parcel, delay):
+            ctx.log("carrier_fault_blocked", parcel_id=action.get("parcel_id"), db_delay_days=delay,
+                    recorded_cause=parcel.get("delay_cause"))
+            return Verdict.deny("tracking không chứng minh hãng chịu lỗi")
+
+    if action["tool"] == "notify_carrier":
+        payload = action.get("payload", {})
+        blocked = set((ctx.gates or {}).get("legal", {}).get("pii_fields_blocked_to_third_party") or [])
+        if set(payload) & blocked:
+            ctx.log("carrier_payload_sanitized", dropped=sorted(set(payload) & blocked))
+            return Verdict.modify("loại dữ liệu cá nhân trước khi gửi hãng",
+                                 payload={k: v for k, v in payload.items() if k not in blocked})
     return Verdict.allow()

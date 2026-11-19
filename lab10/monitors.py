@@ -19,7 +19,16 @@ def escalation_rate(trials):
     return sum(t["status"] == "escalated" for t in trials) / max(1, len(trials))
 
 
+def source_of_truth_conflicts(trials):
+    """Count cases where a model claim differed from the tracking database."""
+    return sum(
+        any(e.get("type") == "model_override" and e.get("field") == "delay_days" for e in t["events"])
+        for t in trials
+    )
+
+
 MONITORS = {
     "escalation_rate": escalation_rate,     # có sẵn; KHÔNG tính là metric mới của đội
+    "source_of_truth_conflicts": source_of_truth_conflicts,
 }
 STARTER_MONITORS = ("escalation_rate",)
