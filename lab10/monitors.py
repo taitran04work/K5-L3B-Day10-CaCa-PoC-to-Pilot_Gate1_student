@@ -27,8 +27,14 @@ def source_of_truth_conflicts(trials):
     )
 
 
+def duplicate_refund_attempts(trials):
+    """Repeated requests that the ledger-based guard stopped before a second payment."""
+    return sum(any(e.get("kind") == "duplicate_refund_blocked" for e in t["events"]) for t in trials)
+
+
 MONITORS = {
     "escalation_rate": escalation_rate,     # có sẵn; KHÔNG tính là metric mới của đội
     "source_of_truth_conflicts": source_of_truth_conflicts,
+    "duplicate_refund_attempts": duplicate_refund_attempts,
 }
 STARTER_MONITORS = ("escalation_rate",)

@@ -3,14 +3,14 @@
   "business": {
     "daily_refund_cap_vnd": 2000000,
     "cost_budget_per_ticket_vnd": 1500,
-    "pilot_scope": {"mode": "warehouse", "warehouses": ["HN", "HCM"], "percent": 100},
+    "pilot_scope": {"mode": "warehouse", "warehouses": ["HN"], "percent": 100},
     "roi_min": 0.2
   },
   "operations": {
     "pic": "NV-TUNG",
     "approver_id": "NV-HANH",
-    "reviewers_on_shift": 2,
-    "review_capacity_per_hour": 12,
+    "reviewers_on_shift": 1,
+    "review_capacity_per_hour": 6,
     "max_queue_wait_minutes": 60,
     "stop_conditions": ["Tắt file_carrier_fault và notify_carrier khi có 1 lỗi hãng oan hoặc 1 lần lộ PII.", "Tắt issue_refund khi phát hiện hoàn sai; chuyển toàn bộ ticket đang chờ cho trưởng ca CSKH."],
     "alert_channel": "#logix-pilot-alerts",

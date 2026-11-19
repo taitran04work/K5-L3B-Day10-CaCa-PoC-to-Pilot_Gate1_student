@@ -1,12 +1,12 @@
 {
-  "team": "",
-  "members": [],
-  "incident": "",
-  "decision_v1": "",
-  "decision_v2": "",
+  "team": "K5-L3B-DAY10-CaCa-PoCtoPilotGate1",
+  "members": ["TranHuuTai-2A202603944", "NguyenThanhCong-2A202618577", "DongVanQuyen-2A202678465"],
+  "incident": "S5",
+  "decision_v1": "Tiếp tục",
+  "decision_v2": "Thu hẹp",
   "three_lines": {
-    "environment_assumption": "",
-    "reduce_or_prevent": "",
-    "measure_in_pilot": ""
+    "environment_assumption": "Sổ cái phản ánh mọi khoản hoàn gần thời gian thực; nếu đồng bộ chậm, cổng phải ưu tiên chuyển người duyệt.",
+    "reduce_or_prevent": "Cổng sổ cái ngăn lệnh ghi hoàn lần hai khi đã có khoản hoàn cùng đơn; nó chỉ giảm rủi ro nếu nguồn sổ cái bị thiếu hoặc trễ.",
+    "measure_in_pilot": "Đo tỷ lệ yêu cầu lặp, độ trễ đồng bộ sổ cái, tỷ lệ chuyển người, chi phí/ticket và ROI theo từng kho trước Gate 2."
   }
 }

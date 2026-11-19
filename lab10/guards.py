@@ -54,6 +54,13 @@ def write_gate(ctx, action):
 
     parcel = next((p for p in order["parcels"] if p["parcel_id"] == action.get("parcel_id")), None) if order else None
     if tool == "issue_refund":
+        # A refund already recorded for the order is a financial fact, even if
+        # the nightly `refund_status` flag has not caught up yet.  Do not write
+        # a second refund for a repeated request; the agent will reply honestly.
+        previous = ctx.tools.ledger_rows(order_id=order["order_id"])
+        if previous:
+            ctx.log("duplicate_refund_blocked", order_id=order["order_id"], existing=len(previous))
+            return Verdict.deny("đơn đã có khoản hoàn trong sổ cái; không ghi hoàn lần hai")
         # The ticket text and the model proposal are untrusted; recalculate the
         # maximum entitlement from tracking and the effective policy.
         policy = next((p for p in ctx.tools.lookup_policies() if p.get("index_active")), None)

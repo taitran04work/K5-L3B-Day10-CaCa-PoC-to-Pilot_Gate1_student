@@ -113,6 +113,8 @@ tín hiệu: đếm sự kiện `model_override` mỗi ngày.
 
 ## B3 · Câu 2.3 · Bản đồ dữ liệu của trợ lý và ví dụ drift
 
+Trợ lý dùng ticket, `orders[].parcels`, policy và sổ cái để quyết hoàn/lỗi hãng; tracking DB là nguồn sự thật. Drift cần theo dõi là policy hoặc tracking nhập bù thay đổi; monitor `source_of_truth_conflicts` báo model đè số khách khai lên DB.
+
 **Cách làm:** đi từ người dùng và việc họ cần làm, tới đầu ra của hệ thống, rồi mới hỏi hệ thống cần dữ liệu
 gì, định dạng ra sao, và **thế giới thật làm dữ liệu đó lệch đi thế nào**; cuối cùng tóm lại trong vài câu.
 Trợ lý LogiX không huấn luyện gì trong lab này, nên ta hỏi về "dữ liệu trợ lý đọc lúc chạy / trường then chốt / nguồn sự thật".
@@ -120,15 +122,15 @@ Gợi ý: mở `data/world.json` phần `policies`, `orders[].parcels`, `ops_lim
 
 | Mục | Điền cho trợ lý hoàn tiền |
 |---|---|
-| Người dùng | |
-| Việc người dùng cần làm xong | |
-| Đầu ra của hệ thống (kể cả các lệnh ghi) | |
-| Dữ liệu trợ lý đọc lúc chạy (bảng nào trong `data/world.json`) | |
-| Trường then chốt quyết định tiền và lỗi hãng | |
-| Với mỗi trường then chốt: **nguồn sự thật** hay **bản sao** (ai cập nhật, khi nào)? | |
-| Định dạng cần để ý (ngày, trường được phép trống, đơn nhiều kiện) | |
-| Thế giới thật làm dữ liệu lệch ở đâu (theo mùa, đổi chính sách, giờ cao điểm, người nhập tay)? | |
-| Câu người ngoài sẽ hỏi về nguồn dữ liệu ("sao hệ thống biết đơn trễ mấy ngày?") | |
+| Người dùng | Khách gửi yêu cầu; CSKH duyệt ca chuyển người; kế toán/hãng chịu hậu quả ghi sổ. |
+| Việc người dùng cần làm xong | Xác định đúng quyền hoàn, ghi một lần và giải thích được căn cứ. |
+| Đầu ra của hệ thống (kể cả các lệnh ghi) | `issue_refund`, `file_carrier_fault`, `notify_carrier`, trả lời khách hoặc escalation. |
+| Dữ liệu trợ lý đọc lúc chạy (bảng nào trong `data/world.json`) | orders/parcels, policies, approvals, ledger, ops_limits và ops_facts. |
+| Trường then chốt quyết định tiền và lỗi hãng | `delivered_date`, `promised_date`, `delay_cause`, shipping fee, policy version, ledger rows. |
+| Với mỗi trường then chốt: **nguồn sự thật** hay **bản sao** (ai cập nhật, khi nào)? | Tracking là nguồn sự thật do hãng cập nhật; policy do vận hành công bố; refund_status là bản sao cập nhật đêm; ledger là sổ ghi thực tế. |
+| Định dạng cần để ý (ngày, trường được phép trống, đơn nhiều kiện) | ISO date; delivered_date có thể trống; mỗi đơn có thể nhiều parcel nên phải chọn đúng parcel. |
+| Thế giới thật làm dữ liệu lệch ở đâu (theo mùa, đổi chính sách, giờ cao điểm, người nhập tay)? | Nhập bù tracking, policy đổi theo mùa và cờ refund_status chậm hơn ledger. |
+| Câu người ngoài sẽ hỏi về nguồn dữ liệu ("sao hệ thống biết đơn trễ mấy ngày?") | Từ chênh lệch delivered_date/promised_date trong tracking DB, không dùng số ngày khách tự khai. |
 
 **Tóm lại (điền vào chỗ trống):**
 Trợ lý dùng `__________`, `__________`, `__________` để giúp `__________` làm được `__________`.
@@ -147,6 +149,8 @@ sự thật về ngày giao · lệch khi điểm phát quét sót hoặc nhập
 <a id="b4"></a>
 
 ## B4 · Câu 2.4 · HAZOP vòng 1 trên tool của agent
+
+HAZOP: `issue_refund` WRONG khi amount vượt quyền lợi DB → guard escalate; `file_carrier_fault` WRONG khi cause không ghi nhận → guard deny; `notify_carrier` PERTURBED khi payload có PII → guard lọc trường cấm.
 
 *Chỉ làm MỘT vòng, trên MỘT tool. Đây là HAZOP vòng 1; HAZOP của thẻ sự cố viết riêng ở Phiếu C mục C4, không ghi đè bảng này.*
 
@@ -169,9 +173,9 @@ Tool chọn phân tích: `________________` (gợi ý: `issue_refund`, `file_car
 
 | Tham số / dòng dữ liệu | Guideword | Lệch cụ thể (viết bằng dữ kiện của lab) | Hậu quả, cho ai | Hiện có gì ngăn? | Gate đề xuất + tầng |
 |---|---|---|---|---|---|
-| | WRONG | | | | |
-| | INVALID | | | | |
-| | INCOMPLETE | | | | |
+| amount_vnd | WRONG | Model tin khách nói trễ 5 ngày trong T-002, DB chỉ 2 ngày | LogiX mất 20.000đ | host chỉ chặn quá giá trị đơn | guard tính lại entitlement từ DB, tầng chặn |
+| approval_id | INVALID | Mã duyệt cũ/hết hạn bị dùng cho đơn khác | Hoàn vượt quyền hạn, người duyệt mất niềm tin | kiểm approval của agent | lookup approval theo đúng ticket, escalation |
+| ledger order | INCOMPLETE | refund_status đêm chưa phản ánh hoàn trước đó ở S5 | Hoàn hai lần, CFO chịu lỗ | không có ở vòng 1 | đọc ledger_rows trước write, tầng chặn |
 | | PERTURBED | | | | |
 | | INCAPABLE | | | | |
 
@@ -188,8 +192,8 @@ Không bắt buộc điền đủ năm dòng. Bắt buộc: **ít nhất ba dòn
 
 | Thành phần | Guideword | Lệch cụ thể | Hậu quả, cho ai | Cổng đề xuất: code hay con số nào trong `config/operating_gates.json` |
 |---|---|---|---|---|
-| | | | | |
-| | | | | |
+| Người duyệt | INCAPABLE | 14 ca đến trong một giờ, một người chỉ duyệt 6 ca/giờ | khách chờ quá SLA | mô phỏng queue | 1 người trực, SLA 60 phút, NV-Hạnh nhận escalation |
+| Phạm vi pilot | INVALID | HCM-B2B luôn đọc dài rồi chuyển người | tiền máy + công người > làm tay | report theo kho | chỉ chạy HN ở vòng 2 |
 
 **Ví dụ mẫu (`issue_refund`, đừng chép):** tham số `amount_vnd` · WRONG · số tiền tính từ số ngày khách tự khai · LogiX mất
 tiền, hãng bị kéo theo một lỗi · hiện chỉ có trần "không vượt tổng tiền đơn" · cổng ghi so với quyền lợi tính từ DB (chặn).
@@ -200,6 +204,8 @@ tiền, hãng bị kéo theo một lỗi · hiện chỉ có trần "không vư�
 
 ## B5 · Câu 2.4 · Checklist go-live 9 nhóm việc, lần 1
 
+Chất lượng/dữ liệu có evidence test và B3; bảo mật/quyền hạn/chi phí/vận hành/pháp lý có guard/config. PIC: Tài (code), Công (chi phí/quyết định), Quyến (vận hành/pháp lý).
+
 Checklist chín nhóm việc phải xong trước khi chạy thử thật. Bàn điền lần đầu ở đây, rồi cập nhật sau sự cố ở Phiếu C mục C11.
 Cột "Bằng chứng lấy từ đâu" trỏ tới mục bàn đã điền ở bước khác; không điền thêm phiếu nào chỉ để lấp cột này.
 
@@ -208,9 +214,9 @@ Trạng thái: **Xong** (có bằng chứng) · **Chưa** · **Không áp dụng
 
 | # | Nhóm việc | Bằng chứng lấy từ đâu (đã có sẵn trong lab) | Mục cần kiểm tra | Trạng thái | Bằng chứng | PIC |
 |---|---|---|---|---|---|---|
-| 1 | Chất lượng | Report `lab10.eval` (mã lần chạy) + bảng soát lỗi (Phiếu B mục B2) | | | | |
-| 2 | Dữ liệu | Bản đồ dữ liệu (Phiếu B mục B3, câu 2.3): trường nào là nguồn sự thật, trường nào là bản sao | | | | |
-| 3 | Bảo mật | Một vòng HAZOP với guideword PERTURBED (Phiếu B mục B4): chữ nào đi vào model mà không do LogiX viết | | | | |
+| 1 | Chất lượng | Report `lab10.eval` (mã lần chạy) + bảng soát lỗi (Phiếu B mục B2) | Không regression và các ngưỡng safety = 0 | Xong | R-base-prepared-20261119-161937-4347e1 | Trần Hữu Tài |
+| 2 | Dữ liệu | Bản đồ dữ liệu (Phiếu B mục B3, câu 2.3): trường nào là nguồn sự thật, trường nào là bản sao | Tracking/ledger là nguồn sự thật | Xong | B3; guard `ledger_rows` | Nguyễn Thành Công |
+| 3 | Bảo mật | Một vòng HAZOP với guideword PERTURBED (Phiếu B mục B4): chữ nào đi vào model mà không do LogiX viết | Không gửi note/contact cho hãng | Xong | config legal + guard notify | Đồng Văn Quyến |
 | 4 | Quyền hạn | `config/switches.json` + guard trước lệnh ghi; thẻ S2, S8 có thêm mục mức kiểm soát (Phiếu C mục C3) | | | | |
 | 5 | Hiệu năng, hạ tầng | Đội tự ước tính; HAZOP guideword INCAPABLE: LLM không trả lời thì sao; số người duyệt và số ca mỗi giờ | | | | |
 | 6 | Chi phí | Khối "kinh doanh và vận hành" của report: chi phí mỗi ticket so với làm tay, ROI, tiền LLM ticket đắt nhất; `config/operating_gates.json` mục `business` | | | | |
@@ -225,6 +231,8 @@ Trạng thái: **Xong** (có bằng chứng) · **Chưa** · **Không áp dụng
 <a id="b6"></a>
 
 ## B6 · Câu 2.5 · Pre-mortem bốn lăng kính → cổng phòng ngừa (khoảng 8–10 phút, cả bàn)
+
+Model tin số khách khai → đối chiếu DB; tổng hoàn vượt ngân sách → trần ngày; hàng duyệt ùn → SLA/công suất; PII/lỗi hãng oan → lọc payload và recorded cause. S5 bổ sung rủi ro hoàn lặp do cờ đối soát chậm.
 
 *Mọi bàn làm pre-mortem ở vòng 1, TRƯỚC khi biết sự cố, để chọn 2–3 cổng phòng ngừa sẽ dựng. Ở vòng 2 bàn mở lại phần này ở
 Phiếu C mục C1 (bút khác màu).*

@@ -5,7 +5,7 @@
 - Tên nhóm (`TenNhom`, không dấu, không khoảng trắng): `CaCa`
 - Lớp: `L3B`
 - Repo của bàn: `K5-L3B-DAY10-CaCa-PoCtoPilotGate1`
-- Thẻ sự cố đã bốc (S1–S8):
+- Thẻ sự cố đã bốc (S1–S8): `S5`
 
 ## Thành viên
 
@@ -32,15 +32,15 @@ Kỹ sư cổng: các mục B1, B2, B7.1–B7.3 và C2, C5–C9; `lab10/guards.p
 
 ### Đóng góp cụ thể
 
-Xác nhận và bổ sung sau khi mỗi thành viên đã thực hiện phần việc của mình.
+Viết cổng kiểm quyền lợi theo tracking, cổng chống hoàn lặp theo sổ cái và hai monitor; chạy trace T-002@55, S5-01/S5-02 và kiểm public tests.
 
 ### Bằng chứng
 
-Ghi mã commit, mã lần chạy và dòng phiếu sau khi chạy lab.
+`1b6ee1d`, `e969c63`; `R-base-prepared-20261119-161937-4347e1`, `R-S5-after-20261119-163830-88979b`; Phiếu B B1–B2, B7 và Phiếu C C2/C7/C8.
 
 ### Exit ticket
 
-Chờ thành viên tự ghi sau buổi lab.
+Cổng an toàn cần dựa vào nguồn sự thật ngoài model; còn cần kiểm tra độ trễ đồng bộ ledger khi pilot thật.
 
 ## NguyenThanhCong-2A202618577
 
@@ -50,15 +50,15 @@ Sản phẩm và kinh doanh: Phiếu A, B3, B6–B8 và quyết định Gate 1; 
 
 ### Đóng góp cụ thể
 
-Xác nhận và bổ sung sau khi thành viên đã thực hiện phần việc của mình.
+Đặt ngưỡng tiêu chí trước khi đo, đọc chi phí/ROI theo kho, quyết định giảm phạm vi pilot từ HN/HCM còn HN sau S5.
 
 ### Bằng chứng
 
-Ghi mã commit, mã lần chạy và dòng phiếu sau khi chạy lab.
+`1b6ee1d`; `R-base-before-20261119-161811-692781`, `R-S5-after-20261119-163830-88979b`; Phiếu A, B3/B6/B8 và C3/C12.
 
 ### Exit ticket
 
-Chờ thành viên tự ghi sau buổi lab.
+Không chỉ nhìn pass rate: quyết định pilot phải chịu được chi phí người trực và ROI theo từng phân khúc.
 
 ## DongVanQuyen-2A202678465
 
@@ -68,12 +68,12 @@ Vận hành và pháp lý: Phiếu A1.2/A2 production, B4–B5, B7.5–B7.6, C10
 
 ### Đóng góp cụ thể
 
-Xác nhận và bổ sung sau khi thành viên đã thực hiện phần việc của mình.
+Thiết kế hàng chờ người duyệt, điều kiện dừng, danh sách PII cấm gửi hãng và runbook ứng phó hoàn lặp.
 
 ### Bằng chứng
 
-Ghi mã commit, mã lần chạy và dòng phiếu sau khi chạy lab.
+`e969c63`; `R-S5-grade-20261119-163830-88979b`; Phiếu A1.2/A2, B4/B5/B7.5–B7.6 và C4/C10/C11.
 
 ### Exit ticket
 
-Chờ thành viên tự ghi sau buổi lab.
+Một cổng kỹ thuật vẫn cần PIC và thao tác dừng rõ ràng, nếu không tín hiệu đỏ không tạo ra hành động.

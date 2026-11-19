@@ -1,6 +1,6 @@
 # Phiếu C · Sự cố và quyết định v2 · Khối 3 (phút 125–200)
 
-**Bàn:** ______ · **Thẻ đã bốc:** ___ *(để trống tới phút 125; bốc số xong thì ghi đúng số đó, ví dụ `S3`. Lab Coach đối chiếu với sổ; lệnh tự kiểm tra in dòng này trong report.)*
+**Bàn:** CaCa · **Thẻ đã bốc:** S5 *(Coach giao S5.)*
 
 Mở `incidents/Sx/card.md` của đúng số đã bốc. Các bước trên thẻ trỏ về đúng mục trong phiếu này. Mục C3 chỉ điền phần ứng với
 số thẻ của bàn; các phần khác để trống.
@@ -30,10 +30,10 @@ Mỗi lệnh `lab10.eval` và `lab10.grade` tự ghi một dòng vào `runs/jour
 
 | # | Mã lần chạy | Bộ ticket · mốc | Đổi MỘT thứ gì so với lần trước | pass_rate (khoảng tin cậy 95%) | pass_k | Hoàn sai (đ) · lỗi hãng oan · lộ dữ liệu | Tỉ lệ chuyển người | Kết luận (một câu) |
 |---|---|---|---|---|---|---|---|---|
-| 1 | | Sx · prepared | nhận thẻ đã bốc, chưa sửa thêm (đúng cổng vòng 1 đã chốt) | | | | | |
-| 2 | | Sx · after | | | | | | |
-| 3 | | Sx · after | | | | | | |
-| 4 | | base · after | (kiểm không regression) | | | | | |
+| 1 | R-S5-prepared-20261119-163831-88979b | S5 · prepared | nhận S5, chưa sửa thêm | 0,7 | 0,7 | 350.000đ · 15 · 0 | 0,3 | hoàn lặp và lỗi hãng còn tồn tại. |
+| 2 | R-S5-after-20261119-163809-dfaa43 | S5 · after | chặn hoàn lặp theo sổ cái | 1,0 | 1,0 | 0đ · 0 · 0 | 0,3 | sạch an toàn nhưng ROI 0,05 chưa đạt. |
+| 3 | R-S5-after-20261119-163830-88979b | S5 · after | thu hẹp HN, một người trực | 1,0 | 1,0 | 0đ · 0 · 0 | 0,375 | ROI 0,25, không vượt trần. |
+| 4 | R-base-after-20261119-161925-4347e1 | base · after | kiểm không regression | 1,0 | 1,0 | 0đ · 0 · 0 | 0,2462 | 13/13 test công khai OK. |
 
 ---
 
@@ -47,25 +47,27 @@ Chạy **trước khi sửa bất cứ thứ gì**:
 python3 -m lab10.grade --incident Sx
 ```
 
-- Mã lần chạy grade: `__________` · base: `__________` · prepared: `__________`
-- Cổng vòng 1 đỡ được ô / con số nào (so cột base với cột prepared): …
-- Khối kinh doanh và vận hành còn dòng nào vượt trần: …
+- Mã grade: `R-S5-grade-20261119-163830-88979b` · base: `R-S5-before-20261119-163831-88979b` · prepared: `R-S5-prepared-20261119-163831-88979b`.
+- Cổng vòng 1 giảm tiền LLM đắt nhất 2.412đ xuống 768đ và loại kho sỉ HCM khỏi phạm vi, nhưng chưa ngăn hoàn lặp đã có trong sổ cái.
+- Prepared còn hoàn sai 350.000đ, lỗi hãng oan 15 và ROI -0,69.
 
 **Mở lại pre-mortem (Phiếu B mục B6), viết bằng bút khác màu.** Với thẻ S1, S3, S4, S5 đây là một phần của phần riêng theo thẻ.
 
-- Sự cố trên thẻ thuộc lăng kính nào (kỹ thuật, kinh doanh, con người và vận hành, pháp lý)? …
-- Có nằm trong các lý do bàn đã viết không? Nếu có: cổng vòng 1 đã đỡ được bao nhiêu (đọc cột prepared trong report)? Nếu không: vì sao cả bàn không nghĩ tới? …
+- Sự cố thuộc lăng kính kinh doanh, kỹ thuật và vận hành.
+- Pre-mortem đã dự kiến chi phí/phạm vi pilot; chưa nêu rõ độ trễ cờ đối soát làm lệnh hoàn lặp. Cổng vòng 1 đã đỡ ticket dài và kho sỉ, nhưng chưa kiểm sổ cái trước lệnh ghi.
 - Lý do còn thiếu, thêm bây giờ:
 
 | Lý do thất bại (viết ở thì quá khứ) | Lăng kính | Kiểm được bằng gì (trace / data / config nào) |
 |---|---|---|
-| | | |
+| Hoàn lặp đã làm chi phí và tiền mất tăng dù ticket lặp lại. | Kinh doanh/kỹ thuật | `ledger_seed`, trace S5-01→S5-02 và guard `duplicate_refund_blocked`. |
 
 ---
 
 <a id="c2"></a>
 
 ## C2 · Câu 3.1 · Bảng soát lỗi của thẻ
+
+S5-02 lặp đơn O-2501 sau S5-01: sổ cái đã có hoàn nhưng cờ đêm chưa cập nhật, gây hoàn/lỗi hãng lặp (lỗi chìm). S5-50 là ticket B2B dài, tốn LLM cao rồi chuyển người. Cổng sổ cái chặn ghi lần hai; B2B ngoài scope pilot.
 
 Dò ít nhất 2 ticket hỏng theo kiểu KHÁC nhau:
 
@@ -111,6 +113,8 @@ Yêu cầu: ít nhất **hai lỗi có nguồn khác nhau** ở phần 2, và í
 <a id="c3"></a>
 
 ## C3 · Câu 3.1 · Phần riêng theo thẻ (chỉ điền phần của số đã bốc; làm trong khoảng 5 phút)
+
+S5: chi phí theo kho = LLM + công duyệt + phí trực chia ticket; ngưỡng không quá 10.000đ và ROI tối thiểu 0,20. HCM-B2B đắt 11.326đ ở base nên bị loại khỏi scope.
 
 | Thẻ | Điền phần nào |
 |---|---|
@@ -229,6 +233,8 @@ Mở lại Phiếu B mục B3. Ghi ở đây những dòng đổi so với vòng
 
 ## C4 · Câu 3.1 · HAZOP của thẻ (ít nhất 3 dòng, viết bằng dữ kiện của thẻ)
 
+MORE: một đơn nhiều ticket lặp → mất tiền. LATE: `refund_status` cập nhật đêm → không ngăn lệnh mới, phải đọc ledger. INCAPABLE: ticket B2B dài làm chi phí LLM vượt trần → không đưa B2B vào pilot.
+
 *Mục riêng, không ghi đè HAZOP vòng 1 ở Phiếu B mục B4. Năm guideword và nghĩa của chúng: xem Phiếu B mục B4.*
 
 Tool chọn phân tích: `________________`
@@ -247,6 +253,8 @@ Bắt buộc: ít nhất ba dòng, trong đó **một dòng là nhánh bàn chư
 
 ## C5 · Câu 3.2, 3.3 · Specification và giả định môi trường
 
+Một order tối đa một khoản hoàn tự động; ghi lần hai bị từ chối, B2B đi thủ công. Giả định ledger đầy đủ/gần thời gian thực; nếu không, escalate.
+
 ### Câu 3.2 · Một specification mà nếu bị vi phạm thì gây ra tác hại trên thẻ
 
 Kiểm được bằng code hoặc bằng một con số trong report: …
@@ -264,6 +272,8 @@ Vì sao có thể sai: …
 <a id="c6"></a>
 
 ## C6 · Câu 3.4 · Fault tree TRƯỚC khi sửa (mã lần chạy: `__________`)
+
+Lỗ CFO = hoàn lặp OR chi phí LLM cao OR công duyệt cao. Hoàn lặp = ticket lặp AND chỉ đọc refund_status cũ. Chi phí cao = nội dung B2B dài; công duyệt cao = phạm vi rộng + 2 người trực.
 
 **Khung tư duy.** Đi từ **tác hại** ngược về nguyên nhân, không đi từ lỗi mình tình cờ thấy. Mỗi tầng hỏi "điều gì phải xảy
 ra thì điều trên mới xảy ra", nối bằng **HOẶC** (một trong các nhánh là đủ) hoặc **VÀ** (phải đồng thời). Một biện pháp tốt
@@ -305,6 +315,8 @@ vì cổng ghi không đọc ticket; còn hở nếu chính tracking DB sai.
 
 ## C7 · Câu 3.5 · Bảng sửa: nguyên nhân → chỗ sửa → giảm hay ngăn
 
+`guards.write_gate` đọc `ledger_rows(order_id)` trước issue_refund và deny nếu đã có: ngăn hoàn lặp. Scope HN/1 người trực trong config: giảm chi phí và đạt ROI. Monitor đếm `duplicate_refund_attempts`: phát hiện tăng yêu cầu lặp.
+
 Sửa NGOÀI model, đúng chỗ cho từng nguyên nhân. Code: `lab10/guards.py` (`pre_guard`, `write_gate`). Con số và quy trình:
 `config/operating_gates.json` (phạm vi, người trực, trần, ngân sách, kiểm mẫu, ghi chú giải thích, cổng pháp lý). Rồi chạy:
 
@@ -325,6 +337,8 @@ python3 -m lab10.grade --incident Sx
 
 ## C8 · Câu 3.6 · Chỉ số theo dõi mới (thước đo → dữ liệu → cách tính)
 
+`duplicate_refund_attempts` = số trial có event `duplicate_refund_blocked`; đếm theo ngày. Vàng ≥1 để đối soát, đỏ ≥3 để tắt issue_refund và điều tra ledger. S5 sau sửa sáng đèn 10 lần.
+
 Thêm **ít nhất một hàm** trong `lab10/monitors.py` và đăng ký vào `MONITORS`. Chỉ số `escalation_rate` có sẵn không tính là chỉ số mới.
 Thẻ S5 dùng mục này cho một con số kinh doanh: chi phí mỗi ticket theo kho (tách tiền máy, công người, tiền mất).
 
@@ -344,6 +358,8 @@ Thẻ S5 dùng mục này cho một con số kinh doanh: chi phí mỗi ticket t
 <a id="c9"></a>
 
 ## C9 · Câu 3.7 · Fault tree SAU khi sửa (mã lần chạy: `__________`)
+
+Nhánh hoàn lặp bị ngăn tại write gate. B2B bị loại khỏi scope; rủi ro còn lại là ledger thiếu/trễ và hàng duyệt quá SLA, được chuyển người và giám sát.
 
 Vẽ lại cây ở C6. Ở mỗi nhánh đã xử lý, thêm một nút `VÀ [gate … hỏng]` và ghi:
 
@@ -367,6 +383,8 @@ Vẽ lại cây ở C6. Ở mỗi nhánh đã xử lý, thêm một nút `VÀ [g
 
 ## C10 · Câu 3.7 · Risk register (thêm ít nhất 1 dòng sau sự cố)
 
+Rủi ro: ledger đồng bộ chậm/thiếu dòng khiến guard không thấy hoàn trước đó; mức cao, PIC NV-Tùng; audit đối soát mỗi ca và tắt issue_refund khi phát hiện một hoàn lặp.
+
 | Rủi ro | Khả năng | Tác động | Người phụ trách (PIC, một người) | Dấu hiệu (metric nào, ngưỡng nào) | Xử lý | Ảnh hưởng bước đánh giá | Nhóm chức năng (GOVERN / MAP / MEASURE / MANAGE) |
 |---|---|---|---|---|---|---|---|
 | | | | | | | | |
@@ -378,6 +396,8 @@ Quy tắc: **mỗi dòng phải đổi được một quyết định.** Cột "
 <a id="c11"></a>
 
 ## C11 · Câu 3.7 · Cập nhật checklist 9 nhóm việc và Runbook phần 4–5
+
+Tài kiểm guard/test; Công rà ROI theo kho; Quyến kiểm đối soát/pháp lý. Nếu duplicate attempts ≥3/ngày, NV-Tùng tắt `issue_refund` trong 15 phút và NV-Hạnh nhận hàng chờ. Nếu ticket tăng gấp 3 trong giờ, chỉ nhận HN và gọi người duyệt dự phòng; LLM lỗi quá 5 phút thì chuyển thủ công.
 
 ### Cập nhật checklist (bảng gốc ở Phiếu B mục B5)
 
@@ -411,6 +431,8 @@ Ghi các dòng đổi sau sự cố. Mỗi dòng vẫn phải có một PIC có 
 <a id="c12"></a>
 
 ## C12 · Quyết định Gate 1 · v2 (phút 185–200)
+
+Quyết định v2: **Thu hẹp**. `R-S5-after-20261119-163830-88979b`: pass rate/pass_k 1,0; hoàn sai/lỗi hãng oan/PII = 0; chi phí 8.027đ, ROI 0,25, không ca ùn. Chỉ chạy HN/1 người trực; kho khác thủ công. Xem lại sau 5 ngày với Tài, Công, Quyến, NV-Hạnh, NV-Tùng.
 
 Quyết định phải khớp bằng chứng và khớp tiêu chí đã ký. Chọn **Tiếp tục** khi report còn dòng vượt trần, hoặc còn ngưỡng đã ký
 chưa đạt, là quyết định không đạt. **Thu hẹp**, **Cải tiến thêm**, **Dừng** có lý do và có số thì đều là quyết định đạt.
